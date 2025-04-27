@@ -2,7 +2,7 @@ let currentCategory = '1';
 let apiKey = localStorage.getItem('gemini_api_key') || '';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // إعداد أزرار التصنيفات
+    // Set up category buttons
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function saveAPIKey() {
     apiKey = document.getElementById('apiKey').value.trim();
     if(!apiKey) {
-        alert('الرجاء إدخال مفتاح API صحيح');
+        alert('Please enter a valid API key');
         return;
     }
     localStorage.setItem('gemini_api_key', apiKey);
@@ -44,49 +44,49 @@ async function generateArticles() {
     if(!validateInputs(topic, count)) return;
 
     try {
-        updateStatus(`جاري إنشاء ${count} مقال... ⏳`);
+        updateStatus(`Generating ${count} articles... ⏳`);
         const zip = new JSZip();
         
-        // إضافة مؤشر تقدم
+        // Add progress indicator
         let progress = 0;
         const progressInterval = setInterval(() => {
             progress++;
-            updateStatus(`جاري إنشاء المقالات... ${progress}%`);
+            updateStatus(`Generating articles... ${progress}%`);
         }, 300);
         
         for(let i = 0; i < count; i++) {
             const content = await fetchArticle(topic);
-            zip.file(`مقال_${i+1}.txt`, content);
+            zip.file(`Article_${i+1}.txt`, content);
             
-            // تحديث المؤشر الحقيقي
+            // Update real progress
             const realProgress = Math.floor(((i+1)/count)*100);
             progress = Math.min(progress, realProgress);
         }
         
         clearInterval(progressInterval);
-        updateStatus(`جاري تحضير الملف للتحميل...`);
+        updateStatus(`Preparing download file...`);
         
         const zipContent = await zip.generateAsync({type: 'blob'});
         downloadZip(zipContent);
         
-        updateStatus(`تم إنشاء ${count} مقال بنجاح! ✅`);
+        updateStatus(`Successfully generated ${count} articles! ✅`);
     } catch(error) {
-        updateStatus(`خطأ: ${error.message}`);
+        updateStatus(`Error: ${error.message}`);
     }
 }
 
 function validateInputs(topic, count) {
     if(!apiKey) {
-        alert('الرجاء إدخال مفتاح API أولاً');
+        alert('Please enter your API key first');
         toggleAPIKey();
         return false;
     }
     if(count < 1 || count > 1000) {
-        alert('الرجاء إدخال عدد بين 1 و 1000');
+        alert('Please enter a number between 1 and 1000');
         return false;
     }
     if(!topic) {
-        alert('الرجاء إدخال موضوع المقال');
+        alert('Please enter an article topic');
         return false;
     }
     return true;
@@ -107,7 +107,7 @@ async function fetchArticle(topic) {
 
     if(!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'فشل الاتصال بالخادم');
+        throw new Error(errorData.error?.message || 'Failed to connect to server');
     }
     
     const data = await response.json();
@@ -116,35 +116,35 @@ async function fetchArticle(topic) {
 
 function generatePrompt(topic) {
     const prompts = {
-        '1': `اكتب مقالة رياضية متكاملة عن ${topic} تتضمن:
-- معلومات تاريخية
-- إحصائيات حديثة
-- آراء الخبراء
-- توقعات مستقبلية
-استخدم لغة عربية فصحى ومنظمة`,
+        '1': `Write a comprehensive sports article about ${topic} including:
+- Historical background
+- Recent statistics
+- Expert opinions
+- Future predictions
+Use professional and well-structured English language`,
         
-        '2': `اكتب وصفة طعام مفصلة عن ${topic} تتضمن:
-- المكونات الدقيقة
-- خطوات التحضير المرقمة
-- الوقت المطلوب
-- القيمة الغذائية
-- نصائح التقديم
-استخدم لغة عربية واضحة`,
+        '2': `Write a detailed food recipe for ${topic} including:
+- Precise ingredients list
+- Numbered preparation steps
+- Required time
+- Nutritional information
+- Serving suggestions
+Use clear and concise English language`,
         
-        '3': `اكتب دليلاً سياحياً شاملاً عن ${topic} يتضمن:
-- الموقع وأفضل أوقات الزيارة
-- المعالم الرئيسية
-- أماكن الإقامة
-- المطاعم المحلية
-- نصائح السفر
-استخدم لغة عربية جذابة`,
+        '3': `Write a complete travel guide about ${topic} including:
+- Location and best times to visit
+- Main attractions
+- Accommodation options
+- Local restaurants
+- Travel tips
+Use engaging and descriptive English language`,
         
-        '4': `اكتب مقالة متكاملة عن ${topic} تتضمن:
-- مقدمة واضحة
-- محتوى منظم
-- خاتمة مختصرة
-- مراجع إن وجدت
-استخدم لغة عربية فصحى واحترافية`
+        '4': `Write a comprehensive article about ${topic} including:
+- Clear introduction
+- Well-organized content
+- Concise conclusion
+- References if available
+Use professional and formal English language`
     };
     return prompts[currentCategory];
 }
@@ -153,12 +153,12 @@ function downloadZip(content) {
     const url = URL.createObjectURL(content);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `المقالات_${new Date().toLocaleDateString('ar-EG')}.zip`;
+    a.download = `Articles_${new Date().toLocaleDateString()}.zip`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     
-    // تحرير الذاكرة بعد ثانية
+    // Free memory after 1 second
     setTimeout(() => {
         window.URL.revokeObjectURL(url);
     }, 1000);
@@ -166,9 +166,9 @@ function downloadZip(content) {
 
 function getDefaultTopic() {
     const topics = {
-        '1': 'أفضل الأندية الرياضية العربية',
-        '2': 'وصفة كعك العيد التقليدي',
-        '3': 'أجمل المدن السياحية في الخليج'
+        '1': 'The best sports clubs in the Middle East',
+        '2': 'Traditional holiday cookie recipe',
+        '3': 'The most beautiful tourist cities in the Gulf region'
     };
     return topics[currentCategory];
 }
